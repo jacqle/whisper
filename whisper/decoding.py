@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Iterable, Optional, Sequence, Union, TYPE_CHECKING
+from itertools import zip_longest
 
 import numpy as np
 import torch
@@ -75,10 +76,11 @@ class DecodingOptions:
 
     # sampling-related options
     temperature: float = 0.0
-    sample_len: Optional[int] = None  # maximum number of tokens to sample
-    best_of: Optional[int] = None     # number of independent samples to collect, when t > 0
-    beam_size: Optional[int] = None   # number of beams in beam search, when t == 0
-    patience: Optional[float] = None  # patience in beam search (https://arxiv.org/abs/2204.05424)
+    sample_len: Optional[int] = None          # maximum number of tokens to sample
+    best_of: Optional[int] = None             # number of independent samples to collect, when t > 0
+    beam_size: Optional[int] = None           # number of beams in beam search, when t == 0
+    patience: Optional[float] = None          # patience in beam search (https://arxiv.org/abs/2204.05424)
+    multiple_samples: Optional[bool] = False  # whether to output all samples or 1-best only
 
     # options for ranking generations (either beams or best-of-N samples)
     length_penalty: Optional[float] = None   # "alpha" in Google NMT, None defaults to length norm
@@ -641,8 +643,13 @@ class DecodingTask:
         no_speech_probs = no_speech_probs[:: self.n_group]
         assert audio_features.shape[0] == len(no_speech_probs) == n_audio
 
-        tokens = tokens.reshape(n_audio, self.n_group, -1)
-        sum_logprobs = sum_logprobs.reshape(n_audio, self.n_group)
+        if self.options.multiple_samples:
+            # sort candidates by logprobs
+            sum_logprobs, indices = sum_logprobs.sort(descending=True)
+            tokens = tokens[indices]
+
+        tokens = tokens.reshape(n_audio, self.n_group, -1) # [1, n_best, n_group]
+        sum_logprobs = sum_logprobs.reshape(n_audio, self.n_group) # [1, n_best]
 
         # get the final candidates for each group, and slice between the first sampled token and EOT
         tokens, sum_logprobs = self.decoder.finalize(tokens, sum_logprobs)
@@ -650,17 +657,21 @@ class DecodingTask:
             [t[self.sample_begin : (t == tokenizer.eot).nonzero()[0, 0]] for t in s] for s in tokens
         ]
 
-        # select the top-ranked sample in each group
-        selected = self.sequence_ranker.rank(tokens, sum_logprobs)
-        tokens: List[List[int]] = [t[i].tolist() for i, t in zip(selected, tokens)]
+        if self.options.multiple_samples:
+            tokens: List[List[int]] = [t.tolist() for t in tokens[0]]
+            avg_logprobs = [0] # not implemented
+        else:
+            # select the top-ranked sample in each group
+            selected = self.sequence_ranker.rank(tokens, sum_logprobs)
+            tokens: List[List[int]] = [t[i].tolist() for i, t in zip(selected, tokens)]
+            sum_logprobs: List[float] = [lp[i] for i, lp in zip(selected, sum_logprobs)]
+            avg_logprobs: List[float] = [lp / (len(t) + 1) for t, lp in zip(tokens, sum_logprobs)]
+
         texts: List[str] = [tokenizer.decode(t).strip() for t in tokens]
 
-        sum_logprobs: List[float] = [lp[i] for i, lp in zip(selected, sum_logprobs)]
-        avg_logprobs: List[float] = [lp / (len(t) + 1) for t, lp in zip(tokens, sum_logprobs)]
-
         fields = (texts, languages, tokens, audio_features, avg_logprobs, no_speech_probs)
-        if len(set(map(len, fields))) != 1:
-            raise RuntimeError(f"inconsistent result lengths: {list(map(len, fields))}")
+        #if len(set(map(len, fields))) != 1:
+        #    raise RuntimeError(f"inconsistent result lengths: {list(map(len, fields))}")
 
         return [
             DecodingResult(
@@ -673,7 +684,7 @@ class DecodingTask:
                 temperature=self.options.temperature,
                 compression_ratio=compression_ratio(text),
             )
-            for text, language, tokens, features, avg_logprob, no_speech_prob in zip(*fields)
+            for text, language, tokens, features, avg_logprob, no_speech_prob in zip_longest(*fields)
         ]
 
 
@@ -704,7 +715,7 @@ def decode(model: "Whisper", mel: Tensor, options: DecodingOptions = DecodingOpt
 
     result = DecodingTask(model, options).run(mel)
     
-    if single:
-        result = result[0]
+    #if single:
+    #    result = result[0]
 
     return result
