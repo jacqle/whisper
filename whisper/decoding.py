@@ -268,7 +268,7 @@ class GreedyDecoder(TokenDecoder):
         tokens = torch.cat([tokens, next_tokens[:, None]], dim=-1)
 
         completed = (tokens[:, -1] == self.eot).all()
-        return tokens, completed
+        return tokens, completed, current_logprobs
 
     def finalize(self, tokens: Tensor, sum_logprobs: Tensor):
         # make sure each sequence has at least one EOT token at the end
@@ -344,7 +344,7 @@ class BeamSearchDecoder(TokenDecoder):
         completed = all(
             len(sequences) >= self.max_candidates for sequences in self.finished_sequences
         )
-        return tokens, completed
+        return tokens, completed, None
 
     def finalize(self, preceding_tokens: Tensor, sum_logprobs: Tensor):
         # collect all finished sequences, including patience, and add unfinished ones if not enough
@@ -587,6 +587,7 @@ class DecodingTask:
         assert audio_features.shape[0] == tokens.shape[0]
         n_batch = tokens.shape[0]
         sum_logprobs: Tensor = torch.zeros(n_batch, device=audio_features.device)
+        logprobs = []
         no_speech_probs = [np.nan] * n_batch
 
         try:
@@ -605,14 +606,18 @@ class DecodingTask:
                     logit_filter.apply(logits, tokens)
 
                 # expand the tokens tensor with the selected next tokens
-                tokens, completed = self.decoder.update(tokens, logits, sum_logprobs)
+                #sum_logprobs += current_logprobs * (tokens[:, -1] != self.eot)
+                tokens, completed, current_logprobs = self.decoder.update(tokens, logits, sum_logprobs)
+                logprobs.append(current_logprobs)
 
                 if completed or tokens.shape[-1] > self.n_ctx:
                     break
         finally:
             self.inference.cleanup_caching()
 
-        return tokens, sum_logprobs, no_speech_probs
+        logprobs = torch.stack(logprobs, 0)
+
+        return tokens, sum_logprobs, no_speech_probs, logprobs
 
     @torch.no_grad()
     def run(self, mel: Tensor) -> List[DecodingResult]:
@@ -636,7 +641,7 @@ class DecodingTask:
         tokens = tokens.repeat_interleave(self.n_group, dim=0).to(audio_features.device)
 
         # call the main sampling loop
-        tokens, sum_logprobs, no_speech_probs = self._main_loop(audio_features, tokens)
+        tokens, sum_logprobs, no_speech_probs, logprobs = self._main_loop(audio_features, tokens)
 
         # reshape the tensors to have (n_audio, n_group) as the first two dimensions
         audio_features = audio_features[:: self.n_group]
@@ -653,12 +658,28 @@ class DecodingTask:
 
         # get the final candidates for each group, and slice between the first sampled token and EOT
         tokens, sum_logprobs = self.decoder.finalize(tokens, sum_logprobs)
-        tokens: List[List[Tensor]] = [
-            [t[self.sample_begin : (t == tokenizer.eot).nonzero()[0, 0]] for t in s] for s in tokens
-        ]
+
+        token_ids = []
+        bpe_tokens = []
+        for s in tokens:
+            for t in s:
+                token_id = [t[self.sample_begin : (t == tokenizer.eot).nonzero()[0, 0]]]
+                token_ids.append(token_id)
+                bpe_tokens.append(tokenizer.convert_ids_to_tokens(token_id))
+
+        #print(len(bpe_tokens))
+        print(bpe_tokens)
+        print(logprobs)
+        print(logprobs.T.shape)
+
+        #tokens: List[List[Tensor]] = [
+        #    [t[self.sample_begin : (t == tokenizer.eot).nonzero()[0, 0]] for t in s] for s in tokens
+        #]
+        tokens = token_ids
+        print(tokens[0])
 
         if self.options.multiple_samples:
-            tokens: List[List[int]] = [t.tolist() for t in tokens[0]]
+            tokens: List[List[int]] = [t.tolist() for t in tokens]
             avg_logprobs = [0] # not implemented
         else:
             # select the top-ranked sample in each group
