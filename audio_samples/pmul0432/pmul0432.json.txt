@@ -1,0 +1,15 @@
+user: i need a place to stay that has a 4 star rating. state: hotel-stars=4
+agent: okay, i'll help you with that. do you have a price range in mind? state:
+user: no, price doesn't matter. i prefer free parking though. state: hotel-parking=yes; hotel-pricerange=dontcare; hotel-stars=4
+agent: the acorn guesthouse located in the north offers free parking and is in moderate pricing range. would you like me to book a room for you? state:
+user: yes can you please and send me the reference number? state: hotel-name=hale koa hotel; hotel-parking=yes; hotel-pricerange=dontcare; hotel-stars=4
+agent: of course, how many nights will you be staying? state:
+user: i need the room for five nights. state: hotel-stay=5; hotel-name=hale koa hotel; hotel-parking=yes; hotel-pricerange=dontcare; hotel-stars=4
+agent: how many people will be staying and what is the starting day you will need? state:
+user: i'd like to book for eight people lasting five nights, starting on saturday. state: hotel-people=8; hotel-day=saturday; hotel-stay=5; hotel-name=hale koa hotel; hotel-parking=yes; hotel-pricerange=dontcare; hotel-stars=4
+agent: booking was successful. reference number is : 1kayw650. can i help you with anything else? state:
+user: ofcourse, information on parking state: hotel-people=8; hotel-day=saturday; hotel-stay=5; hotel-name=hale koa hotel; hotel-parking=yes; hotel-pricerange=dontcare; hotel-stars=4
+agent: the hale koa hotel offers free parking as well as free wifi. can i help with anything else? state:
+user: yes, please. i need a reservation at a restaurant called restaurant aquavit. do they have room on that same day at 0:33 am? state: restaurant-people=8; restaurant-day=saturday; restaurant-time=0:33 am; restaurant-name=restaurant aquavit; hotel-people=8; hotel-day=saturday; hotel-stay=5; hotel-name=hale koa hotel; hotel-parking=yes; hotel-pricerange=dontcare; hotel-stars=4
+agent: booking was successful. the table will be reserved for 15 minutes. reference number is : ak8y5gx6. can i help with anything else today? state:
+user: no, you've taken care of everything. thanks so much. have a great day. state: restaurant-people=8; restaurant-day=saturday; restaurant-time=0:33 am; restaurant-name=restaurant aquavit; hotel-people=8; hotel-day=saturday; hotel-stay=5; hotel-name=hale koa hotel; hotel-parking=yes; hotel-pricerange=dontcare; hotel-stars=4

@@ -1,0 +1,13 @@
+user: can you help me find a restaurant? i want somewhere expensive. state: restaurant-pricerange=expensive
+agent: there are 57 results. is there a certain type of food or area you'd like? state:
+user: north american, i would would like to eat in the centre area? state: restaurant-food=north american; restaurant-pricerange=expensive; restaurant-area=centre
+agent: the gourmet burger kitchen would be perfect for you! it's at regent street city centre. would you like more information? state:
+user: yes, i'd like to get a table for 6 at 3:46 am on sunday. could you book that for me? state: restaurant-people=6; restaurant-day=sunday; restaurant-time=3:46 am; restaurant-food=north american; restaurant-pricerange=expensive; restaurant-area=centre
+agent: booking was successful. reference number is: dkcswx6p. state:
+user: can you also help me find a hotel called the sacajawea hotel? state: restaurant-people=6; restaurant-day=sunday; restaurant-time=3:46 am; restaurant-food=north american; restaurant-pricerange=expensive; restaurant-area=centre; hotel-name=sacajawea hotel
+agent: the sacajawea hotel is located in the north, it is in the moderate price range and has 4 stars. i would be pleased to help you book your stay. state:
+user: thank you! i'd like to book a room starting on sunday. i'll need it for 5 nights and 6 people. state: restaurant-people=6; restaurant-day=sunday; restaurant-time=3:46 am; restaurant-food=north american; restaurant-pricerange=expensive; restaurant-area=centre; hotel-people=6; hotel-day=sunday; hotel-stay=5; hotel-name=sacajawea hotel
+agent: i was able to do that and your reservation number is 6kq6nmiq. state:
+user: thanks i am also needing to book at a guesthouse for 6 for 5 nights starting on sunday state: restaurant-people=6; restaurant-day=sunday; restaurant-time=3:46 am; restaurant-food=north american; restaurant-pricerange=expensive; restaurant-area=centre; hotel-people=6; hotel-day=sunday; hotel-stay=5; hotel-name=sacajawea hotel
+agent: i've got that booked for you. was there anything else i can help you find today? state:
+user: no, that's all i needed. thanks for your help. cheers! state: restaurant-people=6; restaurant-day=sunday; restaurant-time=3:46 am; restaurant-food=north american; restaurant-pricerange=expensive; restaurant-area=centre; hotel-people=6; hotel-day=sunday; hotel-stay=5; hotel-name=sacajawea hotel

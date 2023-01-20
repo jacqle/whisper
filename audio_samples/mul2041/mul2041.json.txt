@@ -1,0 +1,17 @@
+user: i need a train from reeseville to nunapitchuk. state: train-destination=nunapitchuk; train-departure=reeseville
+agent: and what day would you like to travel on? state:
+user: i would like to leave on monday. state: train-destination=nunapitchuk; train-day=monday; train-departure=reeseville
+agent: tr2013 leaves at 0:14 am, should i book it for you? state:
+user: would time would that train arrive by? i need to be in nunapitchuk by 4:54 am. state: train-destination=nunapitchuk; train-day=monday; train-arriveby=4:54 am; train-departure=reeseville
+agent: it will arrive by 0:31 am. should i book it for you? state:
+user: how much would that train ride cost? state: train-destination=nunapitchuk; train-day=monday; train-arriveby=4:54 am; train-departure=reeseville
+agent: it costs 4.40 pounds. may i book it for you? state:
+user: that seems like a really short train ride, how long is it really? state: train-destination=nunapitchuk; train-day=monday; train-arriveby=4:54 am; train-departure=reeseville
+agent: it's a 17 minute trip. state:
+user: yes, please book it for me. i would also like to find a hotel called glen iris inn. state: hotel-name=glen iris inn; train-destination=nunapitchuk; train-day=monday; train-arriveby=4:54 am; train-departure=reeseville
+agent: can you confirm the number of train tickets you'd like me to book? glen iris inn is a 3 star moderate with great reviews. what would you like to know about it? state:
+user: no thank you, please book 8 people for 3 nights from friday. state: hotel-stay=3; hotel-day=friday; hotel-people=8; hotel-name=glen iris inn; train-destination=nunapitchuk; train-day=monday; train-arriveby=4:54 am; train-departure=reeseville
+agent: i was unable to book that can i try something else? state:
+user: how about 2 nights instead? state: hotel-stay=2; hotel-day=friday; hotel-people=8; hotel-name=glen iris inn; train-destination=nunapitchuk; train-day=monday; train-arriveby=4:54 am; train-departure=reeseville
+agent: great news! booking was successful. reference number is : atrpjixk. what else can i do for you? state:
+user: that should be all for today. thank you very much. state: hotel-stay=2; hotel-day=friday; hotel-people=8; hotel-name=glen iris inn; train-destination=nunapitchuk; train-day=monday; train-arriveby=4:54 am; train-departure=reeseville

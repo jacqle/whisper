@@ -1,0 +1,11 @@
+user: book me a train from st. rosa for sunday please state: train-day=sunday; train-departure=st. rosa
+agent: sure can you tell me your destination and time of travel ? state:
+user: i would like to go to neylandville and i would like to leave after 8:56 am. state: train-leaveat=8:56 am; train-destination=neylandville; train-day=sunday; train-departure=st. rosa
+agent: tr1016 leaves at 9:28 am and arrives at 10:28 am, will this train work? state:
+user: yes, that would be great! i'll need to book tickets for 8 people, please? also, can i have the reference number? state: train-people=8; train-leaveat=8:56 am; train-destination=neylandville; train-day=sunday; train-departure=st. rosa
+agent: booking was successful, the total fee is 114.56 gbp payable at the station .reference number is : aa3v02dd. what else can i do for you? state:
+user: i could use some information on an attraction called kambar? state: attraction-name=kambar; train-people=8; train-leaveat=8:56 am; train-destination=neylandville; train-day=sunday; train-departure=st. rosa
+agent: certainly! kambar is a great nightclub in city centre at 1 wheeler street. the postcode is cb23qb and their phone is 01223842725. the entrance fee is a mere 5 pounds! state:
+user: can i have the full address for kambar? state: attraction-name=kambar; train-people=8; train-leaveat=8:56 am; train-destination=neylandville; train-day=sunday; train-departure=st. rosa
+agent: the address is 1 wheeler street postcode cb23qb and the phone number is 01223842725. state:
+user: thank you goodbye state: attraction-name=kambar; train-people=8; train-leaveat=8:56 am; train-destination=neylandville; train-day=sunday; train-departure=st. rosa
