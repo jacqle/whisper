@@ -111,6 +111,9 @@ class DecodingResult:
     text: str = ""
     avg_logprob: float = np.nan
     no_speech_prob: float = np.nan
+    bpe_tokens: List[float] = field(default_factory=list)
+    bpe_logprobs: List[float] = field(default_factory=list)
+    sum_logprobs: float = np.nan
     temperature: float = np.nan
     compression_ratio: float = np.nan
 
@@ -587,7 +590,10 @@ class DecodingTask:
         assert audio_features.shape[0] == tokens.shape[0]
         n_batch = tokens.shape[0]
         sum_logprobs: Tensor = torch.zeros(n_batch, device=audio_features.device)
-        logprobs = []
+        logprobs = {
+                'logprobs': [],
+                'tokens': [],
+                }
         no_speech_probs = [np.nan] * n_batch
 
         try:
@@ -608,14 +614,16 @@ class DecodingTask:
                 # expand the tokens tensor with the selected next tokens
                 #sum_logprobs += current_logprobs * (tokens[:, -1] != self.eot)
                 tokens, completed, current_logprobs = self.decoder.update(tokens, logits, sum_logprobs)
-                logprobs.append(current_logprobs)
+                logprobs['logprobs'].append(current_logprobs)
+                logprobs['tokens'].append(tokens[:, -1])
 
                 if completed or tokens.shape[-1] > self.n_ctx:
                     break
         finally:
             self.inference.cleanup_caching()
 
-        logprobs = torch.stack(logprobs, 0)
+        logprobs['logprobs'] = torch.stack(logprobs['logprobs'], 0).T
+        logprobs['tokens'] = torch.stack(logprobs['tokens'], 0).T
 
         return tokens, sum_logprobs, no_speech_probs, logprobs
 
@@ -659,38 +667,51 @@ class DecodingTask:
         # get the final candidates for each group, and slice between the first sampled token and EOT
         tokens, sum_logprobs = self.decoder.finalize(tokens, sum_logprobs)
 
+        all_special_ids = tokenizer.get_special_ids()
         token_ids = []
         bpe_tokens = []
-        for s in tokens:
-            for t in s:
-                token_id = [t[self.sample_begin : (t == tokenizer.eot).nonzero()[0, 0]]]
-                token_ids.append(token_id)
-                bpe_tokens.append(tokenizer.convert_ids_to_tokens(token_id))
+        bpe_logprobs = []
 
-        #print(len(bpe_tokens))
-        print(bpe_tokens)
-        print(logprobs)
-        print(logprobs.T.shape)
+        for toks, probs in zip(logprobs['tokens'], logprobs['logprobs']):
+            probs = probs[:(toks == tokenizer.eot).nonzero()[0, 0]].tolist()
+            toks = toks[:(toks == tokenizer.eot).nonzero()[0, 0]]
+            bpe_toks = [tokenizer._convert_id_to_token(index) for index in toks]
 
-        #tokens: List[List[Tensor]] = [
-        #    [t[self.sample_begin : (t == tokenizer.eot).nonzero()[0, 0]] for t in s] for s in tokens
-        #]
-        tokens = token_ids
-        print(tokens[0])
+            token_ids.append(toks)
+            bpe_tokens.append(bpe_toks)
+            bpe_logprobs.append(probs)
+            #nonspecial_toks = []
+            #nonspecial_bpe_tokens = []
+            #nonspecial_logprobs = []
+            #for i in range(len(toks)):
+            #    if toks[i] in all_special_ids:
+            #        continue
+            #    nonspecial_toks.append(toks[i])
+            #    non_special_bpe_tokens.append(bpe_toks[i])
+            #    non_special_bpe_logprobs.append(probs[i])
+            #token_ids.append(nonspecial_toks)
+            #bpe_tokens.append(nonspecial_bpe_toks)
+            #bpe_logprobs.append(nonspecial_probs)
 
         if self.options.multiple_samples:
-            tokens: List[List[int]] = [t.tolist() for t in tokens]
-            avg_logprobs = [0] # not implemented
+            #tokens: List[List[int]] = [t.tolist() for t in tokens]
+            tokens = token_ids
+            sum_logprobs = sum_logprobs[0]
         else:
             # select the top-ranked sample in each group
+            tokens: List[List[Tensor]] = [
+                [t[self.sample_begin : (t == tokenizer.eot).nonzero()[0, 0]] for t in s] for s in tokens
+            ]
             selected = self.sequence_ranker.rank(tokens, sum_logprobs)
             tokens: List[List[int]] = [t[i].tolist() for i, t in zip(selected, tokens)]
             sum_logprobs: List[float] = [lp[i] for i, lp in zip(selected, sum_logprobs)]
-            avg_logprobs: List[float] = [lp / (len(t) + 1) for t, lp in zip(tokens, sum_logprobs)]
+            bpe_logprobs: List[List[float]] = [bpe_logprobs[selected[0]]]
+            bpe_tokens: List[List[str]] = [bpe_tokens[selected[0]]]
+            #avg_logprobs: List[float] = [lp / (len(t) + 1) for t, lp in zip(tokens, sum_logprobs)]
 
         texts: List[str] = [tokenizer.decode(t).strip() for t in tokens]
 
-        fields = (texts, languages, tokens, audio_features, avg_logprobs, no_speech_probs)
+        fields = (texts, languages, tokens, audio_features, [], no_speech_probs, bpe_tokens, bpe_logprobs, sum_logprobs)
         #if len(set(map(len, fields))) != 1:
         #    raise RuntimeError(f"inconsistent result lengths: {list(map(len, fields))}")
 
@@ -702,10 +723,13 @@ class DecodingTask:
                 text=text,
                 avg_logprob=avg_logprob,
                 no_speech_prob=no_speech_prob,
+                bpe_tokens=bpe_tokens,
+                bpe_logprobs=bpe_logprobs,
+                sum_logprobs=sum_logprobs,
                 temperature=self.options.temperature,
                 compression_ratio=compression_ratio(text),
             )
-            for text, language, tokens, features, avg_logprob, no_speech_prob in zip_longest(*fields)
+            for text, language, tokens, features, avg_logprob, no_speech_prob, bpe_tokens, bpe_logprobs, sum_logprobs in zip_longest(*fields)
         ]
 
 

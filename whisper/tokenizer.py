@@ -143,6 +143,12 @@ class Tokenizer:
     def convert_ids_to_tokens(self, token_ids: Union[int, List[int], np.ndarray, torch.Tensor], **kwargs):
         return self.tokenizer.convert_ids_to_tokens(token_ids, **kwargs)
 
+    def _convert_id_to_token(self, index: int, **kwargs):
+        return self.tokenizer._tokenizer.id_to_token(int(index))
+
+    def get_special_ids(self):
+        return self.tokenizer.all_special_ids
+
     def decode_with_timestamps(self, tokens) -> str:
         """
         Timestamp tokens are above the special tokens' id range and are ignored by `decode()`.

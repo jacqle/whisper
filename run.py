@@ -46,37 +46,44 @@ options = whisper.DecodingOptions(
         multiple_samples=args['multiple_samples']
         )
 
-wav_file = 'audio_samples/pmul4029/Turn-7.wav' # sacajawea hotel
+#wav_file = 'audio_samples/pmul4029/Turn-7.wav' # sacajawea hotel
 #wav_file = 'audio_samples/mul2418/Turn-3.wav' # bouchon
-wav_file = 'audio_samples/mul0384/Turn-1.wav' # rolfe's chop house
 #wav_file = 'audio_samples/pmul4583/Turn-3.wav' # neylandville
-results = custom_transcribe(wav_file, model, options)
-for result in results:
-    pred_text = result.text
-    print(pred_text)
+#wav_file = 'audio_samples/mul0384/Turn-1.wav' # rolfe's chop house
+#results = custom_transcribe(wav_file, model, options)
+#for result in results:
+#    pred_text = result.text
+#    bpe_tokens = result.bpe_tokens
+#    bpe_logprobs = [round(p, 5) for p in result.bpe_logprobs]
+#    sum_logprobs = result.sum_logprobs
+#    print(pred_text)
+#    print(bpe_tokens)
+#    print(bpe_logprobs)
+#    print(sum_logprobs)
+
 #print(result.audio_features.shape)
 
-#with open(args["file"],"r") as f:
-#    with open(args["outfile"],'a') as g:
-#        for line in tqdm(f.readlines()):
-#            if count >= count_line:
-#                dico = json.loads(line)
-#                results = custom_transcribe(dico["audio_filepath"], model, options)
-#                dico['samples'] = [
-#                        {
-#                            'pred_text': result.text,
-#                            #'tokens': result.tokens,
-#                            'sum_logprobs': result.sum_logprobs,
-#                            'logprobs': result.logprobs,
-#                            }
-#                        for result in results
-#                        ]
-#                json.dump(dico, g, indent=4)
-#                g.write("\n")
-#            else:
-#                pass
-#            count += 1
-#            if time.time() - start > max_inference_time*60:
-#                print("Exiting for requeue")
-#                exit(42)
+with open(args["file"],"r") as f:
+    with open(args["outfile"],'a') as g:
+        for line in tqdm(f.readlines()):
+            if count >= count_line:
+                dico = json.loads(line)
+                results = custom_transcribe(dico["audio_filepath"], model, options)
+                dico['samples'] = [
+                        {
+                            'pred_text': result.text,
+                            'sum_logprobs': round(result.sum_logprobs, 6),
+                            'bpe_tokens': result.bpe_tokens,
+                            'bpe_logprobs': [round(p, 6) for p in result.bpe_logprobs],
+                            }
+                        for result in results
+                        ]
+                json.dump(dico, g, indent=4)
+                g.write("\n")
+            else:
+                pass
+            count += 1
+            if time.time() - start > max_inference_time*60:
+                print("Exiting for requeue")
+                exit(42)
 
