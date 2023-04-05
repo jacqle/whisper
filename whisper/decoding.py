@@ -673,7 +673,10 @@ class DecodingTask:
         bpe_logprobs = []
 
         for toks, probs in zip(logprobs['tokens'], logprobs['logprobs']):
-            toks = toks[:(toks == tokenizer.eot).nonzero()[0, 0]]
+            try: # ignore EOS tokens
+                toks = toks[:(toks == tokenizer.eot).nonzero()[0, 0]]
+            except: # reached max target size limit
+                pass
             probs = probs[:toks.shape[0]]
             bpe_toks = [tokenizer._convert_id_to_token(index) for index in toks]
 
