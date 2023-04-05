@@ -673,8 +673,8 @@ class DecodingTask:
         bpe_logprobs = []
 
         for toks, probs in zip(logprobs['tokens'], logprobs['logprobs']):
-            probs = probs[:(toks == tokenizer.eot).nonzero()[0, 0]].tolist()
             toks = toks[:(toks == tokenizer.eot).nonzero()[0, 0]]
+            probs = probs[:toks.shape[0]]
             bpe_toks = [tokenizer._convert_id_to_token(index) for index in toks]
 
             token_ids.append(toks)
