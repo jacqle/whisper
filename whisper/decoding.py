@@ -677,7 +677,7 @@ class DecodingTask:
                 toks = toks[:(toks == tokenizer.eot).nonzero()[0, 0]]
             except: # reached max target size limit
                 pass
-            probs = probs[:toks.shape[0]]
+            probs = probs[:toks.shape[0]].tolist()
             bpe_toks = [tokenizer._convert_id_to_token(index) for index in toks]
 
             token_ids.append(toks)
