@@ -81,10 +81,10 @@ with open(args["file"],"r") as f:
                 results = custom_transcribe(dico["audio_filepath"], model, options)
                 dico['samples'] = [
                         {
-                            'pred_text': result.text,
-                            'sum_logprobs': round(result.sum_logprobs, 6),
-                            'bpe_tokens': result.bpe_tokens,
-                            'bpe_logprobs': [round(p, 6) for p in result.bpe_logprobs],
+                            'text': result.text,
+                            'sum_probs': round(result.sum_logprobs, 4),
+                            'toks': result.bpe_tokens,
+                            'probs': [round(p, 4) for p in result.bpe_logprobs],
                             }
                         for result in results
                         ]
