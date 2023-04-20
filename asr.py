@@ -18,9 +18,9 @@ parser = argparse.ArgumentParser(
     description='ASR inference.'
 )
 parser.add_argument("--max_inference_time", required=False, default=60, type=int, help="Max time in minutes")
-parser.add_argument("--file", required=False, default="Lucas/dev_manifest_human_conformer_ctc_large_normalized.json", type=str, help="The json.")
+parser.add_argument("--file", required=False, default="", type=str, help="The json.")
 parser.add_argument("--outfile", required=False, default="results.json", type=str, help="The json.")
-parser.add_argument("--model", required=False, default="small.en", type=str, help="The model path or type (medium, large).")
+parser.add_argument("--model", required=False, default="tiny.en", type=str, help="The model path or type (medium, large).")
 parser.add_argument("--beam_size", required=False, default=None,type=int, help="The beam search size.")
 parser.add_argument("--best_of", required=False, default=None, type=int, help="N best.")
 parser.add_argument("--temperature", required=False, default=0.0, type=float, help="Temperature.")
