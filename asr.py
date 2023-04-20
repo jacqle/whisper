@@ -26,12 +26,6 @@ parser.add_argument("--best_of", required=False, default=None, type=int, help="N
 parser.add_argument("--temperature", required=False, default=0.0, type=float, help="Temperature.")
 parser.add_argument("--multiple_samples", required=False, action='store_true', help="Keep multiple samples.")
 
-#parser.add_argument("--patience", required=False, default=0.0, type=float, help="Patience.")
-#parser.add_argument("--temperature_increment_on_fallback", required=False, default=0.2, type=float, help="temperature to increase when falling back when the decoding fails to meet either of the thresholds below ")
-#parser.add_argument("--compression_ratio_threshold", required=False, default=2.4, type=float, help="if the gzip compression ratio is higher than this value, treat the decoding as failed")
-#parser.add_argument("--logprob_threshold", required=False, default=2.4, type=float, help="if the average log probability is lower than this value, treat the decoding as failed")
-#parser.add_argument("--no_speech_threshold", required=False, default=0.6, type=float, help="if the probability of the <|nospeech|> token is higher than this value AND the decoding has failed due to `logprob_threshold`, consider the segment as silence")
-
 args = parser.parse_args().__dict__
 max_inference_time = args["max_inference_time"]
 model = whisper.load_model(args["model"])
@@ -48,23 +42,6 @@ options = whisper.DecodingOptions(
         multiple_samples=args['multiple_samples']
         )
 
-#wav_file = 'audio_samples/pmul4029/Turn-7.wav' # sacajawea hotel
-#wav_file = 'audio_samples/mul2418/Turn-3.wav' # bouchon
-#wav_file = 'audio_samples/pmul4583/Turn-3.wav' # neylandville
-#wav_file = 'audio_samples/mul0384/Turn-1.wav' # rolfe's chop house
-#results = custom_transcribe(wav_file, model, options)
-#for result in results:
-#    pred_text = result.text
-#    bpe_tokens = result.bpe_tokens
-#    bpe_logprobs = [round(p, 5) for p in result.bpe_logprobs]
-#    sum_logprobs = result.sum_logprobs
-#    print(pred_text)
-#    print(bpe_tokens)
-#    print(bpe_logprobs)
-#    print(sum_logprobs)
-
-#print(result.audio_features.shape)
-
 count_line = 0
 if os.path.exists(args["outfile"]):
     with open(args["outfile"],'r') as g:
@@ -74,10 +51,8 @@ if os.path.exists(args["outfile"]):
 with open(args["file"],"r") as f:
     with open(args["outfile"],'a') as g:
         for line in f.readlines():
-        #for line in tqdm(f.readlines()):
             if count >= count_line:
                 dico = json.loads(line)
-                #print(dico)
                 results = custom_transcribe(dico["audio_filepath"], model, options)
                 dico['samples'] = [
                         {
@@ -96,4 +71,3 @@ with open(args["file"],"r") as f:
             if time.time() - start > max_inference_time*60:
                 print("Exiting for requeue")
                 exit(42)
-
